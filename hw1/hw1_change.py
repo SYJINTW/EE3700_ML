@@ -17,6 +17,10 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.naive_bayes import GaussianNB
 from sklearn.metrics import accuracy_score
 
+import os
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
 
 # Load data file and return two numpy arrays, including x: features and 
 # y: labels
@@ -157,22 +161,32 @@ def test(clf, x_test):
 if __name__=='__main__':
     # Some parameters
     path = 'wine.data'
-    testset_portion = 0.2
+    testset_portions = [0.2, 0.5, 0.8, 0.9, 0.98]
     
-    # Load data
-    data, x, y = load_data(path)
-    class_distribution(y)
+    results = []
+
+    for testset_portion in testset_portions:
+        for i in range(10):
+            # Load data
+            data, x, y = load_data(path)
+            class_distribution(y)
+            
+            # Preprocessing
+            x_train, x_test, y_train, y_test = split_dataset(x, y, testset_portion)
+            x_train_nor, x_test_nor = feature_scaling(x_train, x_test)
+            
+            # Classification: train and test
+            clf = train(x_train_nor, y_train)
+            y_pred = test(clf, x_test_nor)
+            
+            # Accuracy
+            acc = accuracy_score(y_test, y_pred)
+            print('\nAccuracy:', round(acc, 3))
+
+            results.append([testset_portion ,acc])
     
-    # Preprocessing
-    x_train, x_test, y_train, y_test = split_dataset(x, y, testset_portion)
-    x_train_nor, x_test_nor = feature_scaling(x_train, x_test)
-    
-    # Classification: train and test
-    clf = train(x_train_nor, y_train)
-    y_pred = test(clf, x_test_nor)
-    
-    # Accuracy
-    acc = accuracy_score(y_test, y_pred)
-    print('\nAccuracy:', round(acc, 3))
-    
+    print(results)
+    df = pd.DataFrame(results, columns=['testset_portion', 'accuracy'])
+    ax = sns.barplot(x='testset_portion', y='accuracy',data=df)
+    plt.show()
     
